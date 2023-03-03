@@ -1,4 +1,6 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.contrib.auth.models import User, auth
+from django.contrib import messages
 
 # Create your views here.
 
@@ -8,4 +10,34 @@ def index(request):
 
 
 def register(request):
-    return render(request, 'signup.html')
+
+    if request.method == 'POST':
+        username = request.POST['username']
+        email = request.POST['email']
+        password = request.POST['password']
+        password2 = request.POST['password2']
+
+        # checking for the 2 passwords to be thesame
+        if password == password2:
+            # checking if the enmail already exists
+            if User.objects.filter(email=email).exists():
+                messages.info(request, "Email already taken")
+                return redirect('register')
+            # checking if the username already exists
+            elif User.objects.filter(username=username).exists():
+                messages.info(request, 'Username already taken')
+                return redirect('register')
+
+            # creating user now
+            else:
+                user = User.objects.create_user(
+                    username=username, email=email, password=password)
+                user.save()
+                return redirect('login')
+        else:
+            messages.info(request, 'Passwords do not match')
+            return redirect('register')
+        return redirect('/')
+
+    else:
+        return render(request, 'signup.html')
